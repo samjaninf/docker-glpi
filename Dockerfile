@@ -1,26 +1,32 @@
-FROM ubuntu:trusty
-MAINTAINER cedric@zestprod.com
-RUN apt-get update
-RUN apt-get install -y apache2
+FROM php:rc-apache
+LABEL maintainer="richard@pegasio"
 
-RUN sudo apt-get install -y software-properties-common \
-  && add-apt-repository ppa:ondrej/php \
-  && apt-get update
-
-RUN apt-get install -y --force-yes \
-  wget \
-  php5.6 \
-  php5.6-mysql \
-  php5.6-ldap \
-  php5.6-xmlrpc \
-  curl \
-  php5.6-curl \
-  php5.6-gd \
-  php5.6-mbstring \
-  php5.6-simplexml \
-  php5.6-xml \
-  php5.6-apcu \
-  php5.6-imap
+RUN apt-get update && apt-get install -y \
+  libfreetype6-dev \
+  libjpeg62-turbo-dev \
+  libpng-dev \
+  libxml2-dev \
+  libzip-dev \
+  libc-client-dev \
+  libkrb5-dev \
+  libldap2-dev \
+  && apt-get upgrade -y \
+  && /bin/rm -r -f /var/lib/apt/lists/* \
+  && pecl install APCu-5.1.14 \
+  && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+  && docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu \
+  && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+  && docker-php-ext-install -j$(nproc) gd \
+    pdo_mysql \
+    xmlrpc \
+    xml \
+    json \
+    imap \
+    zip \
+    ldap \
+    json \
+    intl \
+  && docker-php-ext-enable apcu
 
 RUN a2enmod rewrite && service apache2 stop
 WORKDIR /var/www/html
